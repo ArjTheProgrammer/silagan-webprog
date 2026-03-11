@@ -1,0 +1,148 @@
+
+body {
+    background: #181824; /* matte black / space color */
+    color: #e0e6f6; /* soft space white/blue for text */
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.attendance-container {
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+	padding: 32px 24px 24px 24px;
+	margin: 32px auto 16px auto;
+	max-width: 600px;
+}
+
+.attendance-header {
+	margin-bottom: 18px;
+}
+
+.attendance-title {
+	color: #232946;
+	margin-bottom: 4px;
+	font-size: 1.7rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+.attendance-desc {
+	color: #6b7a90;
+	font-size: 1.08rem;
+}
+
+.input-group {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 24px;
+}
+
+.student-input {
+	flex: 1;
+	background: #f3f6fa;
+	color: #232946;
+	border: 1.5px solid #dbeafe;
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-size: 1rem;
+	outline: none;
+	transition: border 0.2s;
+}
+.student-input:focus {
+	border: 1.5px solid #3b82f6;
+}
+
+.add-btn {
+	background: #059669;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 10px 22px;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.add-btn:hover {
+	background: #047857;
+}
+
+.student-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.student-item {
+	background: #f9fafb;
+	border-radius: 10px;
+    border-style: solid;
+    border-color: rgba(128, 128, 128, 0.242);
+    border-width: 1px;
+	margin-bottom: 14px;
+	padding: 18px 18px 14px 18px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	box-shadow: 0 1px 8px 0 rgba(0,0,0,0.06);
+}
+
+.student-name {
+	font-size: 1.13rem;
+	padding-right: 10px;
+	color: #232946;
+	font-weight: 600;
+}
+
+.button-group {
+	display: flex;
+	gap: 10px;
+}
+
+.present-btn {
+	background: #2563eb;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 8px 18px;
+	font-size: 1rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.present-btn:hover {
+	background: #1d4ed8;
+}
+
+.absent-btn {
+	background: #f59e1a;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 8px 18px;
+	font-size: 1rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.absent-btn:hover {
+	background: #d97706;
+}
+
+.remove-btn {
+	background: #ef4444;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 8px 18px;
+	font-size: 1rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.remove-btn:hover {
+	background: #b91c1c;
+}
+
