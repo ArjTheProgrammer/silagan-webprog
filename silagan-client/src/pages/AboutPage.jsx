@@ -1,4 +1,4 @@
-import Button from "../components/Buttons.jsx";
+import Button from "../components/Button.jsx";
 
 const AboutPage = () => {
   return (
