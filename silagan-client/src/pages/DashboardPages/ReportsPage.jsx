@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Typography, Card, CardContent, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import React, { useMemo, useRef, useState } from 'react';
+import { Typography, Card, CardContent, Box, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { PieChart } from '@mui/x-charts/PieChart';
 
@@ -51,6 +51,7 @@ function generateMockSummary(journals) {
 
 function ReportsPage() {
   const [monthsToShow, setMonthsToShow] = useState(5);
+  const printRef = useRef(null);
 
   const { months, emotions, series } = useMemo(() => {
     // Build month buckets (sorted)
@@ -86,13 +87,124 @@ function ReportsPage() {
 
   const summary = useMemo(() => generateMockSummary(mockedJournals), []);
 
+  const handlePrint = () => {
+    const printContent = printRef.current;
+
+    if (!printContent) {
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=900');
+
+    if (!printWindow) {
+      return;
+    }
+
+    const headMarkup = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((node) => node.outerHTML)
+      .join('');
+
+    const exportedAt = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    }).format(new Date());
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Reports Summary</title>
+          ${headMarkup}
+          <style>
+            @page {
+              size: A4;
+              margin: 16mm;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              font-family: Arial, Helvetica, sans-serif;
+              background: #ffffff;
+              color: #1f2937;
+            }
+
+            .report-shell {
+              padding: 28px;
+            }
+
+            .report-header {
+              margin-bottom: 24px;
+              padding-bottom: 14px;
+              border-bottom: 1px solid #d1d5db;
+            }
+
+            .report-header h1 {
+              margin: 0 0 6px;
+              font-size: 28px;
+              font-weight: 700;
+            }
+
+            .report-header p {
+              margin: 0;
+              font-size: 14px;
+              color: #6b7280;
+              line-height: 1.5;
+            }
+
+            .report-content .MuiCard-root {
+              box-shadow: none !important;
+              border: 1px solid #e5e7eb !important;
+              break-inside: avoid;
+              page-break-inside: avoid;
+            }
+
+            .report-content .MuiCardContent-root {
+              padding: 20px;
+            }
+
+            .report-content svg {
+              max-width: 100%;
+            }
+          </style>
+        </head>
+        <body>
+          <main class="report-shell">
+            <header class="report-header">
+              <h1>Reports Summary</h1>
+              <p>Analytics overview for generated reports, category breakdown, and completion performance.</p>
+              <p>Prepared on ${exportedAt}</p>
+            </header>
+            <section class="report-content">
+              ${printContent.outerHTML}
+            </section>
+          </main>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Reports
-      </Typography>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Typography variant="h4" gutterBottom>
+          Reports
+        </Typography>
+        <Button variant="outlined" size="small" onClick={handlePrint}>
+          Print report
+        </Button>
+      </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 my-6">
+      <div ref={printRef} className="grid gap-6 grid-cols-1 lg:grid-cols-3 my-6">
         <div className="col-span-1 lg:col-span-2 rounded-3xl border-2 border-zinc-900 bg-white p-4">
           <Typography variant="h6" className="mb-2">
             Emotions by Month
@@ -153,8 +265,6 @@ function ReportsPage() {
           </Card>
         </div>
       </div>
-
-      {/* removed raw counts debug output per request */}
     </>
   );
 }

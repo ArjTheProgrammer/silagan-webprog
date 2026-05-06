@@ -196,7 +196,7 @@ export default function DashLayout() {
 						{pageTitle}
 					</Typography>
 
-					<Search>
+					{/* <Search>
 						<SearchIconWrapper>
 							<SearchIcon />
 						</SearchIconWrapper>
@@ -206,7 +206,7 @@ export default function DashLayout() {
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 						/>
-					</Search>
+					</Search> */}
 
 					<Box sx={{ flexGrow: 1 }} />
 

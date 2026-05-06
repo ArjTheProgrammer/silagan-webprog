@@ -1,0 +1,52 @@
+[
+	{
+		"id": 1,
+		"fullName": "Christopher Naval",
+		"birthdate": "1998-04-12",
+		"password": "ChriN@v4l98",
+		"email": "christopher.naval@example.com",
+		"dateRegistered": "2023-02-14",
+		"role": "developer",
+		"isActive": true
+	},
+	{
+		"id": 2,
+		"fullName": "Jonel Villaver",
+		"birthdate": "1996-09-30",
+		"password": "J0nelV!ll96",
+		"email": "jonel.villaver@example.com",
+		"dateRegistered": "2022-11-02",
+		"role": "user",
+		"isActive": true
+	},
+	{
+		"id": 3,
+		"fullName": "Luis Ryan Sanisit",
+		"birthdate": "2000-01-21",
+		"password": "Lu!sRy@n00",
+		"email": "luis.sanisit@example.com",
+		"dateRegistered": "2024-01-08",
+		"role": "tester",
+		"isActive": false
+	},
+	{
+		"id": 4,
+		"fullName": "Edrich Darren Santuyo",
+		"birthdate": "1999-07-16",
+		"password": "EdriCh#99",
+		"email": "edrich.santuyo@example.com",
+		"dateRegistered": "2021-06-25",
+		"role": "user",
+		"isActive": true
+	},
+	{
+		"id": 5,
+		"fullName": "Vj Edgecombe",
+		"birthdate": "2001-12-02",
+		"password": "VjEdg3c0mb1",
+		"email": "vj.edgecombe@example.com",
+		"dateRegistered": "2024-08-19",
+		"role": "developer",
+		"isActive": true
+	}
+]
