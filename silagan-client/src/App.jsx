@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 
 // HomePage Structure
 import Layout from './layouts/Layout';
@@ -15,6 +15,7 @@ import DashLayout from './layouts/DashLayout';
 import DashboardPage from './pages/DashboardPages/DashboardPage';
 import ReportsPage from './pages/DashboardPages/ReportsPage';
 import UsersPage from './pages/DashboardPages/UsersPage';
+import DashArticleListPage from './pages/DashboardPages/DashArticleListPage';
 
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -72,13 +73,35 @@ const routes = [
       },
       {
         path: "users",
-        element: <UsersPage />, 
+        element: (
+          <RequireRole allowedRoles={['admin', 'editor']}>
+            <UsersPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: "articles",
+        element: (
+          <RequireRole allowedRoles={['admin', 'editor']}>
+            <DashArticleListPage />
+          </RequireRole>
+        ),
       },
     ],
   },
 ];
 
 const router = createBrowserRouter(routes);
+
+function RequireRole({ allowedRoles, children }) {
+  const role = localStorage.getItem('role');
+
+  if (!role || !allowedRoles.includes(role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   return (

@@ -47,6 +47,12 @@ const dashboardNavItems = [
 		to: "/dashboard/users",
 		icon: PeopleIcon,
 	},
+	{
+		label: "Articles",
+		title: "Articles",
+		to: "/dashboard/articles",
+		icon: ArticleIcon,
+	},
 ];
 
 const openedMixin = (theme) => ({
@@ -163,6 +169,11 @@ export default function DashLayout() {
 	const location = useLocation();
 	const pageTitle = getPageTitle(location.pathname);
 	const navigate = useNavigate();
+	const role = localStorage.getItem('role');
+	const visibleNavItems = dashboardNavItems.filter((item) => {
+		if (item.to !== '/dashboard/users' && item.to !== '/dashboard/articles') return true;
+		return ['admin', 'editor'].includes(role);
+	});
 
 	const handleDrawerOpen = () => {
 		setOpen(true);
@@ -225,7 +236,7 @@ export default function DashLayout() {
 				<Divider />
                 {/* Drawer List */}
 				<List>
-					{dashboardNavItems.map(({ label, to, icon: Icon }) => (
+					{visibleNavItems.map(({ label, to, icon: Icon }) => (
 						<ListItem key={to} disablePadding sx={{ display: "block" }}>
 							<ListItemButton
 								component={Link}

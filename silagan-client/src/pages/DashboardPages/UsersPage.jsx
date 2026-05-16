@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -10,44 +10,45 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Modal,
   Button,
   FormControlLabel,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
-import usersSeed from '../../data/users.json';
+import { fetchUsers, createUser, updateUser } from '../../services/userService';
+
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 700,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
 
 function UsersPage() {
-  const [rows, setRows] = useState(() =>
-    usersSeed.map((u, index) => ({
-      id: Number(u.id ?? index + 1),
-      fullName: u.fullName,
-      birthdate: u.birthdate,
-      email: u.email,
-      dateRegistered: u.dateRegistered,
-      role: typeof u.role === 'string' ? u.role : 'user',
-      isActive: typeof u.isActive === 'boolean' ? u.isActive : true,
-    }))
-  );
+  const [open, setOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);   // Track if editing
+  const [editUserId, setEditUserId] = useState(null);  // Track the user being edited
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [isAddOpen, setIsAddOpen] = useState(false);
   const [newUser, setNewUser] = useState({
     fullName: '',
     birthdate: '',
     email: '',
     dateRegistered: '',
-    role: 'user',
+    role: 'viewer',
     password: '',
     isActive: true,
   });
-
   const isValidEmail = useCallback((email) => {
     const normalized = String(email || '').trim();
     if (!normalized) return false;
@@ -65,11 +66,34 @@ function UsersPage() {
     return date <= cutoff;
   }, []);
 
-  const onToggleActive = useCallback((id) => {
-    setRows((prevRows) => prevRows.map((row) => (row.id === id ? { ...row, isActive: !row.isActive } : row)));
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await fetchUsers();
+      setUsers(
+        data.map((u, index) => ({
+          id: Number(u.id ?? index + 1),
+          fullName: u.fullName,
+          birthdate: u.birthdate,
+          email: u.email,
+          dateRegistered: u.dateRegistered,
+          role: typeof u.role === 'string' ? u.role : 'viewer',
+          isActive: typeof u.isActive === 'boolean' ? u.isActive : true,
+        }))
+      );
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   const onOpenAdd = useCallback(() => {
+    setIsEditing(false); // Reset to "Add" mode
     const today = new Date();
     const defaultBirthdate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
       .toISOString()
@@ -79,36 +103,66 @@ function UsersPage() {
       email: '',
       birthdate: defaultBirthdate,
       dateRegistered: today.toISOString().slice(0, 10),
-      role: 'user',
+      role: 'viewer',
       password: '',
       isActive: true,
     });
-    setIsAddOpen(true);
+    setOpen(true);
   }, []);
 
-  const onCloseAdd = useCallback(() => setIsAddOpen(false), []);
+  const onCloseAdd = useCallback(() => {
+    setOpen(false);
+    setIsEditing(false);
+    setEditUserId(null);
+  }, []);
+
+  const handleEdit = useCallback(
+    (id) => {
+      const userToEdit = users.find((u) => u.id === id);
+      if (!userToEdit) return;
+      setNewUser({ ...userToEdit, password: '' }); // Set password to an empty string
+      setEditUserId(id);                            // Track the user being edited
+      setIsEditing(true);                           // Switch to "Edit" mode
+      setOpen(true);                                // Open the modal
+    },
+    [users]
+  );
 
   const onChangeNewUser = useCallback((field, value) => {
     setNewUser((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const onSaveNewUser = useCallback(() => {
-    const nextId = rows.reduce((maxId, row) => Math.max(maxId, Number(row.id) || 0), 0) + 1;
-    const dateRegistered = newUser.dateRegistered || new Date().toISOString().slice(0, 10);
-    setRows((prevRows) => [
-      ...prevRows,
-      {
-        id: nextId,
-        fullName: newUser.fullName.trim(),
-        birthdate: newUser.birthdate || null,
-        email: newUser.email.trim(),
-        dateRegistered,
-        role: newUser.role || 'user',
-        isActive: Boolean(newUser.isActive),
-      },
-    ]);
-    setIsAddOpen(false);
-  }, [newUser, rows]);
+  const handleSaveUser = useCallback(async () => {
+    try {
+      if (isEditing) {
+        // Update user
+        const updatedUser = { ...newUser };
+        if (!updatedUser.password) {
+          delete updatedUser.password; // Exclude password if it's empty
+        }
+        await updateUser(editUserId, updatedUser);
+      } else {
+        // Add new user
+        await createUser(newUser);
+      }
+      await loadUsers(); // Reload users
+      onCloseAdd();      // Close modal
+    } catch (error) {
+      console.error('Error saving user:', error);
+    }
+  }, [isEditing, newUser, editUserId, loadUsers, onCloseAdd]);
+
+  const handleToggleActive = useCallback(
+    async (id, isActive) => {
+      try {
+        await updateUser(id, { isActive: !isActive });
+        await loadUsers(); // Reload users after toggling
+      } catch (error) {
+        console.error('Error toggling user status:', error);
+      }
+    },
+    [loadUsers]
+  );
 
   const columns = useMemo(
     () => [
@@ -132,7 +186,7 @@ function UsersPage() {
         width: 160,
         sortable: true,
         type: 'singleSelect',
-        valueOptions: ['developer', 'user', 'tester'],
+        valueOptions: ['admin', 'editor', 'viewer'],
         editable: true,
       },
       {
@@ -160,37 +214,37 @@ function UsersPage() {
         width: 220,
         sortable: false,
         filterable: false,
-        renderCell: (params) => {
-          const onEdit = () => alert(`Edit user: ${params.row.fullName}`);
-
-          return (
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <IconButton size="small" color="primary" onClick={onEdit} aria-label="edit">
-                <EditIcon fontSize="small" />
-              </IconButton>
-              <Switch
-                size="small"
-                checked={Boolean(params.row.isActive)}
-                onChange={() => onToggleActive(params.row.id)}
-                inputProps={{ 'aria-label': `toggle ${params.row.fullName} active` }}
-              />
-            </Stack>
-          );
-        },
+        renderCell: (params) => (
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleEdit(params.row.id)}
+              aria-label="edit"
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <Switch
+              size="small"
+              checked={Boolean(params.row.isActive)}
+              onChange={() => handleToggleActive(params.row.id, params.row.isActive)}
+              inputProps={{ 'aria-label': `toggle ${params.row.fullName} active` }}
+            />
+          </Stack>
+        ),
       },
     ],
-    [onToggleActive]
+    [handleEdit, handleToggleActive]
   );
 
   const roleOptions = useMemo(() => {
-    const roleSet = new Set(rows.map((row) => row.role).filter(Boolean));
+    const roleSet = new Set(users.map((row) => row.role).filter(Boolean));
     return ['all', ...Array.from(roleSet)];
-  }, [rows]);
+  }, [users]);
 
   const filteredRows = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-
-    return rows.filter((row) => {
+    return users.filter((row) => {
       const nameParts = String(row.fullName ?? '').trim().split(/\s+/).filter(Boolean);
       const firstName = nameParts[0] ?? '';
       const lastName = nameParts[nameParts.length - 1] ?? '';
@@ -206,7 +260,14 @@ function UsersPage() {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [rows, roleFilter, searchTerm, statusFilter]);
+  }, [users, roleFilter, searchTerm, statusFilter]);
+
+  const isSaveDisabled =
+    !newUser.fullName.trim() ||
+    !newUser.email.trim() ||
+    !isValidEmail(newUser.email) ||
+    !isAtLeast18(newUser.birthdate) ||
+    (!isEditing && (!newUser.password.trim() || !meetsPasswordRule(newUser.password)));
 
   return (
     <>
@@ -265,24 +326,39 @@ function UsersPage() {
         </Stack>
       </div>
 
+      {/* Data grid */}
       <Box sx={{ height: 520, width: '100%' }}>
         <DataGrid
           rows={filteredRows}
           columns={columns}
-          initialState={{ pagination: { paginationModel: { pageSize: 5 } }, sorting: { sortModel: [{ field: 'fullName', sort: 'asc' }] } }}
+          loading={loading}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 5 } },
+            sorting: { sortModel: [{ field: 'fullName', sort: 'asc' }] },
+          }}
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           density="comfortable"
           processRowUpdate={(newRow) => {
-            setRows((prevRows) => prevRows.map((row) => (row.id === newRow.id ? newRow : row)));
+            setUsers((prevUsers) => prevUsers.map((row) => (row.id === newRow.id ? newRow : row)));
             return newRow;
           }}
         />
       </Box>
 
-      <Dialog open={isAddOpen} onClose={onCloseAdd} fullWidth maxWidth="sm">
-        <DialogTitle>Add user</DialogTitle>
-        <DialogContent>
+      {/* Modal for Add / Edit User (switched from Dialog to Modal per professor's sample) */}
+      <Modal
+        keepMounted
+        open={open}
+        onClose={onCloseAdd}
+        aria-labelledby="add-user-modal"
+        aria-describedby="add-user-modal-description"
+      >
+        <Box sx={modalStyle}>
+          <Typography id="add-user-modal" variant="h4" component="h2" sx={{ mb: 2 }}>
+            {isEditing ? 'Edit User' : 'Add User'}
+          </Typography>
+
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Full name"
@@ -336,7 +412,7 @@ function UsersPage() {
                 label="Role"
                 onChange={(event) => onChangeNewUser('role', event.target.value)}
               >
-                {['developer', 'user', 'tester'].map((role) => (
+                {['admin', 'editor', 'viewer'].map((role) => (
                   <MenuItem key={role} value={role}>
                     {role}
                   </MenuItem>
@@ -352,10 +428,12 @@ function UsersPage() {
               helperText={
                 Boolean(newUser.password) && !meetsPasswordRule(newUser.password)
                   ? 'Password must be at least 8 characters.'
+                  : isEditing
+                  ? 'Leave blank to keep existing password.'
                   : ' '
               }
               fullWidth
-              required
+              required={!isEditing}
             />
             <FormControlLabel
               control={
@@ -367,25 +445,21 @@ function UsersPage() {
               label={newUser.isActive ? 'Active' : 'Inactive'}
             />
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onCloseAdd}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={onSaveNewUser}
-            disabled={
-              !newUser.fullName.trim() ||
-              !newUser.email.trim() ||
-              !newUser.password.trim() ||
-              !isValidEmail(newUser.email) ||
-              !meetsPasswordRule(newUser.password) ||
-              !isAtLeast18(newUser.birthdate)
-            }
-          >
-            Add user
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+          <Stack spacing={2} direction="row" sx={{ mt: 3 }}>
+            <Button variant="outlined" onClick={onCloseAdd}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSaveUser}
+              disabled={isSaveDisabled}
+            >
+              {isEditing ? 'Save Changes' : 'Add'}
+            </Button>
+          </Stack>
+        </Box>
+      </Modal>
     </>
   );
 }

@@ -1,8 +1,38 @@
+import { useEffect, useState } from "react";
 import ArticleList from "../../components/ArticleList.jsx";
 import Button from "../../components/Button.jsx";
-import articles from "../../data/article-content.js";
+import { fetchArticles } from "../../services/articleService";
 
 const ArticleListPage = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadArticles = async () => {
+      try {
+        setLoading(true);
+        const { data } = await fetchArticles({ status: "active" });
+        if (isMounted) {
+          setArticles(data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadArticles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="flex w-full flex-col gap-6">
       <section className="border-y-2 border-zinc-900 bg-zinc-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -31,7 +61,13 @@ const ArticleListPage = () => {
           </h2>
         </div>
 
-        <ArticleList articles={articles} />
+        {loading ? (
+          <p className="text-sm text-zinc-600">Loading articles...</p>
+        ) : articles.length ? (
+          <ArticleList articles={articles} />
+        ) : (
+          <p className="text-sm text-zinc-600">No articles available yet.</p>
+        )}
 
         {/* <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-3xl border-2 border-zinc-900 bg-zinc-100 p-4">

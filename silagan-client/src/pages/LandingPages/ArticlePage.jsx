@@ -1,12 +1,60 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Button from "../../components/Button.jsx";
-import articles from "../../data/article-content.js";
+import { fetchArticleBySlug } from "../../services/articleService";
 
 function ArticlePage() {
   const { name } = useParams();
-  const article = articles.find((article) => article.name === name);
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!article) {
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadArticle = async () => {
+      try {
+        setLoading(true);
+        setNotFound(false);
+        const { data } = await fetchArticleBySlug(name);
+        if (isMounted) {
+          setArticle(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          if (error?.response?.status === 404) {
+            setNotFound(true);
+          } else {
+            console.error("Error fetching article:", error);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (name) {
+      loadArticle();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [name]);
+
+  if (loading) {
+    return (
+      <div className="flex w-full flex-col gap-6">
+        <section className="border-y-2 border-zinc-900 bg-zinc-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <p className="text-sm text-zinc-600">Loading article...</p>
+        </section>
+      </div>
+    );
+  }
+
+  if (notFound || !article) {
     return (
       <div className="flex w-full flex-col gap-6">
         <section className="border-y-2 border-zinc-900 bg-zinc-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -59,7 +107,7 @@ function ArticlePage() {
             )}
           </div>
           <div className="prose prose-sm max-w-none space-y-4 text-zinc-700">
-            {article.content.map((paragraph, index) => (
+            {(article.content || []).map((paragraph, index) => (
               <p
                 key={index}
                 className="text-base leading-7 text-zinc-700 whitespace-pre-wrap"

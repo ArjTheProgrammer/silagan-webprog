@@ -235,7 +235,7 @@ function ReportsPage() {
           </Typography>
           <Card variant="outlined" sx={{ bgcolor: 'transparent' }}>
             <CardContent>
-              <Typography variant="body2" paragraph>
+              <Typography variant="body2" sx={{ mb: 2 }}>
                 {summary}
               </Typography>
             </CardContent>
