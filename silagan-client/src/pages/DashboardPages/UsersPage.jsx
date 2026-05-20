@@ -17,7 +17,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
-import { fetchUsers, createUser, updateUser } from '../../services/userService';
+import { fetchUsers, createUser, updateUser } from '../../services/UserService';
 
 const modalStyle = {
   position: 'absolute',
